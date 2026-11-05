@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GoalJar — Социальный трекер накоплений</title>
+<style>
+  :root {
+    --bg: #F8F9FA;
+    --surface: #FFFFFF;
+    --text: #1F2937;
+    --text-muted: #6B7280;
+    --accent: #10B981;
+    --accent-hover: #059669;
+    --warning: #F59E0B;
+    --purple: #6366F1;
+    --border: #E5E7EB;
+    --shadow: 0 4px 20px rgba(0,0,0,0.06);
+    --radius: 16px;
+  }
+  [data-theme="dark"] {
+    --bg: #121212;
+    --surface: #1E1E1E;
+    --text: #F3F4F6;
+    --text-muted: #9CA3AF;
+    --border: #2D2D2D;
+    --shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background 0.3s, color 0.3s;
+    padding: 20px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  button { font-family: inherit; cursor: pointer; border: none; }
+  input, select { font-family: inherit; }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  .logo {
+    font-size: 22px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .header-actions { display: flex; gap: 8px; }
+  .icon-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    font-size: 18px;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .badge {
+    position: absolute;
+    top: -4px; right: -4px;
+    background: var(--accent);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 18px; height: 18px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+  }
+
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+    margin-bottom: 16px;
+    animation: fadeIn 0.3s ease;
+  }
+
+  /* ===== ПРОФИЛЬ ===== */
+  .profile-banner {
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    color: white;
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .profile-banner h3 { font-size: 18px; margin-bottom: 4px; }
+  .profile-banner p { font-size: 13px; opacity: 0.9; }
+  .profile-id {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-family: monospace;
+    margin-top: 10px;
+    cursor: pointer;
+  }
+
+  /* ===== НАВИГАЦИЯ (ТАБЫ) ===== */
+  .tabs {
+    display: flex;
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .tab {
+    flex: 1;
+    padding: 10px;
+    background: none;
+    color: var(--text-muted);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .tab.active {
+    background: var(--accent);
+    color: white;
+  }
+
+  /* ===== ПУСТОЕ СОСТОЯНИЕ ===== */
+  .empty-state { text-align: center; padding: 40px 20px; }
+  .empty-state .emoji { font-size: 56px; margin-bottom: 12px; }
+  .empty-state h2 { font-size: 20px; margin-bottom: 8px; }
+  .empty-state p { color: var(--text-muted); margin-bottom: 20px; font-size: 14px; }
+
+  /* ===== ФОРМЫ ===== */
+  .form-group { margin-bottom: 16px; text-align: left; }
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .form-group input, .form-group select {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 16px;
+    transition: border 0.2s;
+  }
+  .form-group input:focus, .form-group select:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .btn {
+    width: 100%;
+    padding: 16px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+  .btn-secondary {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { background: var(--border); }
+  .btn-purple { background: var(--purple); color: white; }
+  .btn-purple:hover { background: #4F46E5; }
+
+  /* ===== ЦЕЛИ ===== */
+  .goal-card { cursor: pointer; transition: transform 0.2s; }
+  .goal-card:hover { transform: translateY(-2px); }
+  .goal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .goal-title {
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .goal-amount { font-size: 14px; color: var(--text-muted); }
+  .progress-bar {
+    height: 10px;
+    background: var(--bg);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), #34D399);
+    border-radius: 10px;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .progress-fill.purple {
+    background: linear-gradient(90deg, var(--purple), #A78BFA);
+  }
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .progress-percent { color: var(--accent); font-weight: 600; }
+
+  /* ===== ДЕТАЛИ ===== */
+  .back-btn {
+    background: none;
+    color: var(--text);
+    font-size: 14px;
+    margin-bottom: 16px;
+    padding: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .big-amount {
+    font-size: 36px;
+    font-weight: 700;
+    text-align: center;
+    margin: 20px 0 8px;
+  }
+  .sub-amount {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+  .big-progress { height: 14px; margin-bottom: 16px; }
+  .rate-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--bg);
+    border-radius: 12px;
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+  .rate-info .rate { font-weight: 600; color: var(--accent); }
+  .actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .actions .btn { padding: 14px; font-size: 14px; }
+  .actions-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  /* ===== ЛЕНТА ===== */
+  .feed-title {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+  .feed-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .feed-item:last-child { border-bottom: none; }
+  .avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .avatar.purple { background: linear-gradient(135deg, var(--purple), #EC4899); }
+  .feed-content { flex: 1; min-width: 0; }
+  .feed-name { font-weight: 600; font-size: 14px; }
+  .feed-time { font-size: 12px; color: var(--text-muted); }
+  .feed-amount { color: var(--accent); font-weight: 700; font-size: 15px; }
+  .feed-amount.out { color: var(--warning); }
+
+  /* ===== ДРУЗЬЯ ===== */
+  .friend-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    background: var(--bg);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .friend-card:hover { transform: translateX(4px); }
+  .friend-info { flex: 1; min-width: 0; }
+  .friend-name { font-weight: 600; font-size: 15px; }
+  .friend-goals { font-size: 12px; color: var(--text-muted); }
+  .friend-arrow { color: var(--text-muted); font-size: 18px; }
+
+  /* ===== МОДАЛКИ ===== */
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 100;
+  }
+  .modal.active { display: flex; }
+  .modal-content {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 24px;
+    max-width: 400px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal-content h3 { margin-bottom: 16px; }
+  .share-link {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .share-link input {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 13px;
+  }
+
+  /* ===== ВЫБОР ЦЕЛИ-ИСТОЧНИКА ===== */
+  .source-goal {
+    padding: 12px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .source-goal:hover { border-color: var(--accent); }
+  .source-goal.selected {
+    border-color: var(--accent);
+    background: rgba(16, 185, 129, 0.08);
+  }
+  .source-goal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  .source-goal-name { font-weight: 600; font-size: 14px; }
+  .source-goal-balance { font-size: 13px; color: var(--accent); font-weight: 600; }
+
+  /* ===== УВЕДОМЛЕНИЕ ===== */
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--text);
+    color: var(--bg);
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 200;
+    transition: transform 0.3s;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  .hidden { display: none !important; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ШАПКА -->
+<div class="header">
+  <div class="logo">🎯 GoalJar</div>
+  <div class="header-actions">
+    <button class="icon-btn" onclick="showFriends()" title="Друзья">
+      👥
+      <span class="badge hidden" id="friendsBadge">0</span>
+    </button>
+    <button class="icon-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+  </div>
+</div>
+
+<!-- ПРОФИЛЬ -->
+<div id="profileBanner" class="profile-banner hidden">
+  <h3 id="profileName">—</h3>
+  <p>Ваш личный ID для друзей</p>
+  <div class="profile-id" onclick="copyProfileLink()" id="profileId">—</div>
+</div>
+
+<!-- ТАБЫ -->
+<div class="tabs" id="mainTabs">
+  <button class="tab active" onclick="switchTab('goals')" id="tabGoals">🎯 Мои цели</button>
+  <button class="tab" onclick="switchTab('friends')" id="tabFriends">👥 Друзья</button>
+</div>
+
+<!-- ===== ЭКРАН: МОИ ЦЕЛИ ===== -->
+<div id="myGoalsScreen">
+  <!-- Пустое состояние -->
+  <div id="emptyState" class="hidden">
+    <div class="card empty-state">
+      <div class="emoji">🏝️</div>
+      <h2>Ваша первая цель</h2>
+      <p>Поставьте цель в любой валюте и поделитесь с друзьями — они смогут помочь вам копить быстрее</p>
+      <button class="btn btn-primary" onclick="showCreateForm()">Создать цель</button>
+    </div>
+  </div>
+
+  <!-- Форма создания -->
+  <div id="createForm" class="hidden">
+    <button class="back-btn" onclick="cancelCreate()">← Назад</button>
+    <div class="card">
+      <h3 style="margin-bottom: 20px;">Новая цель</h3>
+      <div class="form-group">
+        <label>Название</label>
+        <input type="text" id="goalName" placeholder="Например: Отпуск в Италии">
+      </div>
+      <div class="form-group">
+        <label>Эмодзи</label>
+        <input type="text" id="goalEmoji" placeholder="✈️" maxlength="2" value="🎯">
+      </div>
+      <div class="form-group">
+        <label>Сумма цели</label>
+        <input type="number" id="goalAmount" placeholder="2000" min="1">
+      </div>
+      <div class="form-group">
+        <label>Валюта цели</label>
+        <select id="goalCurrency">
+          <option value="EUR">€ Евро</option>
+          <option value="USD">$ Доллар</option>
+          <option value="RUB">₽ Рубль</option>
+          <option value="CHF">₣ Франк</option>
+          <option value="CNY">¥ Юань</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Уже накоплено (в рублях)</label>
+        <input type="number" id="goalSaved" placeholder="0" min="0" value="0">
+      </div>
+      <button class="btn btn-primary" onclick="createGoal()">Создать цель</button>
+    </div>
+  </div>
+
+  <!-- Список целей -->
+  <div id="goalsList" class="hidden">
+    <button class="btn btn-secondary" onclick="showCreateForm()" style="margin-bottom: 16px;">+ Новая цель</button>
+    <div id="goalsContainer"></div>
+  </div>
+
+  <!-- Детали моей цели -->
+  <div id="goalDetails" class="hidden">
+    <button class="back-btn" onclick="showMyGoals()">← Все цели</button>
+    <div class="card">
+      <div class="goal-header">
+        <div class="goal-title"><span id="detailEmoji"></span><span id="detailName"></span></div>
+      </div>
+      <div class="big-amount" id="detailSaved"></div>
+      <div class="sub-amount" id="detailTarget"></div>
+      <div class="progress-bar big-progress">
+        <div class="progress-fill" id="detailProgress" style="width: 0%"></div>
+      </div>
+      <div class="progress-info">
+        <span id="detailPercent" class="progress-percent"></span>
+        <span id="detailRemaining"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="rate-info">
+        <span>Курс <span id="rateCurrency"></span></span>
+        <span class="rate" id="rateValue"></span>
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" onclick="openAddModal()">+ Пополнить</button>
+        <button class="btn btn-secondary" onclick="openShareModal()">🔗 Поделиться</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="feed-title">💚 История</div>
+      <div id="feedContainer"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ЭКРАН: ДРУЗЬЯ ===== -->
+<div id="friendsScreen" class="hidden">
+  <div id="friendsEmpty" class="hidden">
+    <div class="card empty-state">
+      <div class="emoji">🤝</div>
+      <h2>Пока нет друзей</h2>
+      <p>Поделитесь ссылкой на свой профиль — когда друг перейдёт по ней, он появится в вашем списке</p>
+      <button class="btn btn-primary" onclick="openShareProfileModal()">📤 Поделиться профилем</button>
+      <button class="btn btn-secondary" onclick="showDemoFriend()" style="margin-top: 10px;">🎭 Добавить демо-друга</button>
+    </div>
+  </div>
+
+  <div id="friendsList" class="hidden">
+    <button class="btn btn-secondary" onclick="openShareProfileModal()" style="margin-bottom: 16px;">📤 Пригласить друга</button>
+    <div id="friendsContainer"></div>
+  </div>
+
+  <!-- Детали цели друга -->
+  <div id="friendGoalDetails" class="hidden">
+    <button class="back-btn" onclick="showFriendProfile()" id="friendBackBtn">← Назад</button>
+    <div class="card">
+      <div class="goal-header">
+        <div class="goal-title"><span id="fDetailEmoji"></span><span id="fDetailName"></span></div>
+      </div>
+      <div style="text-align: center; color: var(--text-muted); font-size: 13px; margin-bottom: 8px;">
+        Цель друга <b id="fFriendName"></b>
+      </div>
+      <div class="big-amount" id="fDetailSaved"></div>
+      <div class="sub-amount" id="fDetailTarget"></div>
+      <div class="progress-bar big-progress">
+        <div class="progress-fill purple" id="fDetailProgress" style="width: 0%"></div>
+      </div>
+      <div class="progress-info">
+        <span id="fDetailPercent" class="progress-percent" style="color: var(--purple);"></span>
+        <span id="fDetailRemaining"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="actions">
+        <button class="btn btn-purple" onclick="openHelpModal()">💜 Помочь</button>
+        <button class="btn btn-secondary" onclick="showFriendProfile()">Все цели</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="feed-title">💜 Поддержка</div>
+      <div id="fFeedContainer"></div>
+    </div>
+  </div>
+
+  <!-- Профиль друга (список его целей) -->
+  <div id="friendProfile" class="hidden">
+    <button class="back-btn" onclick="backToFriends()">← Все друзья</button>
+    <div class="card">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div class="avatar purple" id="fpAvatar" style="width: 56px; height: 56px; font-size: 22px;"></div>
+        <div>
+          <div style="font-size: 20px; font-weight: 700;" id="fpName"></div>
+          <div style="font-size: 13px; color: var(--text-muted);" id="fpStats"></div>
+        </div>
+      </div>
+    </div>
+    <div id="fpGoalsContainer"></div>
+  </div>
+</div>
+
+<!-- ===== МОДАЛКИ ===== -->
+
+<!-- Пополнить свою цель -->
+<div class="modal" id="addModal">
+  <div class="modal-content">
+    <h3>Пополнить цель</h3>
+    <div class="form-group">
+      <label>Сумма в рублях</label>
+      <input type="number" id="addAmount" placeholder="1000" min="1">
+    </div>
+    <button class="btn btn-primary" onclick="addFunds()" style="margin-bottom: 10px;">Добавить</button>
+    <button class="btn btn-secondary" onclick="closeModal('addModal')">Отмена</button>
+  </div>
+</div>
+
+<!-- Поделиться целью -->
+<div class="modal" id="shareModal">
+  <div class="modal-content">
+    <h3>Поделиться целью</h3>
+    <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 16px;">
+      Отправьте ссылку друзьям — они увидят ваш прогресс и смогут помочь
+    </p>
+    <div class="share-link">
+      <input type="text" id="shareLink" readonly>
+      <button class="btn btn-primary" style="width: auto; padding: 12px 20px;" onclick="copyShareLink()">📋</button>
+    </div>
+    <button class="btn btn-secondary" onclick="closeModal('shareModal')">Закрыть</button>
+  </div>
+</div>
+
+<!-- Поделиться профилем -->
+<div class="modal" id="shareProfileModal">
+  <div class="modal-content">
+    <h3>Поделиться профилем</h3>
+    <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 16px;">
+      Когда друг перейдёт по ссылке, он автоматически добавится в ваш список друзей
+    </p>
+    <div class="share-link">
+      <input type="text" id="profileShareLink" readonly>
+      <button class="btn btn-primary" style="width: auto; padding: 12px 20px;" onclick="copyProfileShareLink()">📋</button>
+    </div>
+    <button class="btn btn-secondary" onclick="closeModal('shareProfileModal')">Закрыть</button>
+  </div>
+</div>
+
+<!-- Добавить друга по ссылке (появляется при переходе) -->
+<div class="modal" id="addFriendModal">
+  <div class="modal-content">
+    <h3>👋 Новый друг!</h3>
+    <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 16px;">
+      <b id="newFriendName"></b> поделился с вами своим профилем. Добавить его в друзья?
+    </p>
+    <button class="btn btn-primary" onclick="confirmAddFriend()" style="margin-bottom: 10px;">✅ Добавить в друзья</button>
+    <button class="btn btn-secondary" onclick="closeModal('addFriendModal'); history.replaceState(null, '', window.location.pathname);">Позже</button>
+  </div>
+</div>
+
+<!-- Помочь другу -->
+<div class="modal" id="helpModal">
+  <div class="modal-content">
+    <h3>💜 Помочь другу</h3>
+    <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 16px;">
+      Выберите, с какой вашей цели перевести средства
+    </p>
+    <div id="sourceGoalsList"></div>
+    <div class="form-group" style="margin-top: 16px;">
+      <label>Сумма перевода (₽)</label>
+      <input type="number" id="helpAmount" placeholder="500" min="1">
+    </div>
+    <button class="btn btn-purple" onclick="confirmHelp()" style="margin-bottom: 10px;">Перевести</button>
+    <button class="btn btn-secondary" onclick="closeModal('helpModal')">Отмена</button>
+  </div>
+</div>
+
+<!-- Уведомление -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ===== КОНСТАНТЫ =====
+  const RATES = { RUB: 1, EUR: 98.5, USD: 92.3, CHF: 104.2, CNY: 12.7 };
+  const CUR_SYM = { RUB: '₽', EUR: '€', USD: '$', CHF: '₣', CNY: '¥' };
+
+  // ===== СОСТОЯНИЕ =====
+  let profile = JSON.parse(localStorage.getItem('profile') || 'null');
+  let goals = JSON.parse(localStorage.getItem('goals') || '[]');
+  let friends = JSON.parse(localStorage.getItem('friends') || '[]');
+  let currentGoalId = null;
+  let currentFriendId = null;
+  let currentFriendGoalId = null;
+  let selectedSourceGoalId = null;
+  let pendingFriend = null;
+
+  // ===== ИНИЦИАЛИЗАЦИЯ =====
+  function init() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    document.getElementById('themeBtn').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+
+    // Создаём профиль если нет
+    if (!profile) {
+      const name = prompt('Как вас зовут? Это имя будут видеть друзья.') || 'Пользователь';
+      profile = {
+        id: 'u_' + Math.random().toString(36).substr(2, 8),
+        name: name
+      };
+      saveProfile();
+    }
+
+    // Обработка URL-параметров
+    handleUrlParams();
+
+    render();
+  }
+
+  function handleUrlParams() {
+    const params = new URLSearchParams(window.location.search);
+    
+    // Друг перешёл по моей ссылке
+    if (params.has('addFriend')) {
+      const friendId = params.get('addFriend');
+      const friendName = decodeURIComponent(params.get('name') || 'Друг');
+      
+      // Не добавляем самого себя
+      if (friendId === profile.id) {
+        history.replaceState(null, '', window.location.pathname);
+        return;
+      }
+      
+      // Проверяем, нет ли уже такого друга
+      if (friends.find(f => f.id === friendId)) {
+        showToast('Этот друг уже в вашем списке');
+        history.replaceState(null, '', window.location.pathname);
+        return;
+      }
+      
+      pendingFriend = { id: friendId, name: friendName };
+      document.getElementById('newFriendName').textContent = friendName;
+      document.getElementById('addFriendModal').classList.add('active');
+    }
+    
+    // Я перешёл по ссылке на конкретную цель друга
+    if (params.has('goal') && params.has('friend')) {
+      const friendId = params.get('friend');
+      const goalId = parseInt(params.get('goal'));
+      
+      // Если друг есть — открываем его цель
+      const friend = friends.find(f => f.id === friendId);
+      if (friend) {
+        currentFriendId = friendId;
+        currentFriendGoalId = goalId;
+        showScreen('friendsScreen');
+        switchTab('friends');
+        openFriendGoal(friendId, goalId);
+        history.replaceState(null, '', window.location.pathname);
+      }
+    }
+  }
+
+  // ===== СОХРАНЕНИЕ =====
+  function saveProfile() { localStorage.setItem('profile', JSON.stringify(profile)); }
+  function saveGoals() { localStorage.setItem('goals', JSON.stringify(goals)); }
+  function saveFriends() { localStorage.setItem('friends', JSON.stringify(friends)); }
+
+  // ===== ТЕМА =====
+  function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    document.getElementById('themeBtn').textContent = next === 'dark' ? '☀️' : '🌙';
+    localStorage.setItem('theme', next);
+  }
+
+  // ===== НАВИГАЦИЯ =====
+  function showScreen(id) {
+    ['myGoalsScreen', 'friendsScreen'].forEach(s => {
+      document.getElementById(s).classList.add('hidden');
+    });
+    document.getElementById(id).classList.remove('hidden');
+  }
+
+  function switchTab(tab) {
+    document.getElementById('tabGoals').classList.toggle('active', tab === 'goals');
+    document.getElementById('tabFriends').classList.toggle('active', tab === 'friends');
+    
+    if (tab === 'goals') {
+      showScreen('myGoalsScreen');
+      renderMyGoals();
+    } else {
+      showScreen('friendsScreen');
+      renderFriends();
+    }
+  }
+
+  function showMyGoals() { renderMyGoals(); }
+  function backToFriends() { renderFriends(); }
+
+  // ===== МОИ ЦЕЛИ =====
+  function showCreateForm() {
+    hideAllMyGoals();
+    document.getElementById('createForm').classList.remove('hidden');
+  }
+  function cancelCreate() { renderMyGoals(); }
+
+  function hideAllMyGoals() {
+    ['emptyState', 'createForm', 'goalsList', 'goalDetails'].forEach(id => {
+      document.getElementById(id).classList.add('hidden');
+    });
+  }
+
+  function renderMyGoals() {
+    hideAllMyGoals();
+    if (goals.length === 0) {
+      document.getElementById('emptyState').classList.remove('hidden');
+    } else {
+      document.getElementById('goalsList').classList.remove('hidden');
+      const container = document.getElementById('goalsContainer');
+      container.innerHTML = goals.map(g => {
+        const targetRub = g.amount * RATES[g.currency];
+        const percent = Math.min(100, (g.saved / targetRub) * 100);
+        return `
+          <div class="card goal-card" onclick="openGoal(${g.id})">
+            <div class="goal-header">
+              <div class="goal-title">${g.emoji} ${escapeHtml(g.name)}</div>
+              <div class="goal-amount">${formatMoney(g.amount)} ${CUR_SYM[g.currency]}</div>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: ${percent}%"></div>
+            </div>
+            <div class="progress-info">
+              <span class="progress-percent">${percent.toFixed(1)}%</span>
+              <span>${formatMoney(g.saved)} ₽</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  function createGoal() {
+    const name = document.getElementById('goalName').value.trim();
+    const emoji = document.getElementById('goalEmoji').value.trim() || '🎯';
+    const amount = parseFloat(document.getElementById('goalAmount').value);
+    const currency = document.getElementById('goalCurrency').value;
+    const saved = parseFloat(document.getElementById('goalSaved').value) || 0;
+
+    if (!name || !amount || amount <= 0) {
+      showToast('Заполните название и сумму');
+      return;
+    }
+
+    goals.push({
+      id: Date.now(),
+      name, emoji, amount, currency, saved,
+      createdAt: new Date().toISOString(),
+      history: []
+    });
+    saveGoals();
+    document.getElementById('goalName').value = '';
+    document.getElementById('goalAmount').value = '';
+    document.getElementById('goalSaved').value = '0';
+    renderMyGoals();
+  }
+
+  function openGoal(id) {
+    currentGoalId = id;
+    const g = goals.find(x => x.id === id);
+    if (!g) return;
+
+    hideAllMyGoals();
+    document.getElementById('goalDetails').classList.remove('hidden');
+
+    document.getElementById('detailEmoji').textContent = g.emoji;
+    document.getElementById('detailName').textContent = g.name;
+
+    const targetRub = g.amount * RATES[g.currency];
+    const percent = Math.min(100, (g.saved / targetRub) * 100);
+    const remaining = Math.max(0, targetRub - g.saved);
+
+    document.getElementById('detailSaved').textContent = formatMoney(g.saved) + ' ₽';
+    document.getElementById('detailTarget').textContent =
+      `из ${formatMoney(targetRub)} ₽ (${formatMoney(g.amount)} ${CUR_SYM[g.currency]})`;
+    document.getElementById('detailProgress').style.width = percent + '%';
+    document.getElementById('detailPercent').textContent = percent.toFixed(1) + '%';
+    document.getElementById('detailRemaining').textContent = 'Осталось: ' + formatMoney(remaining) + ' ₽';
+    document.getElementById('rateCurrency').textContent = CUR_SYM[g.currency];
+    document.getElementById('rateValue').textContent =
+      g.currency === 'RUB' ? '—' : RATES[g.currency].toFixed(2) + ' ₽';
+
+    renderFeed(g, 'feedContainer');
+  }
+
+  function renderFeed(goal, containerId) {
+    const feed = document.getElementById(containerId);
+    const history = goal.history || [];
+    if (history.length === 0) {
+      feed.innerHTML = '<p style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px 0;">Пока пусто</p>';
+      return;
+    }
+    feed.innerHTML = history.slice().reverse().map(h => {
+      const isOut = h.type === 'help_out';
+      const avatarClass = isOut ? 'purple' : '';
+      const amountClass = isOut ? 'out' : '';
+      const sign = isOut ? '−' : '+';
+      const label = {
+        'add': 'Пополнение',
+        'help_in': 'Помощь от ' + escapeHtml(h.fromName),
+        'help_out': 'Помощь другу ' + escapeHtml(h.toName)
+      }[h.type] || '';
+      return `
+        <div class="feed-item">
+          <div class="avatar ${avatarClass}">${isOut ? '💜' : (h.fromName ? h.fromName[0] : 'Вы')}</div>
+          <div class="feed-content">
+            <div class="feed-name">${label}</div>
+            <div class="feed-time">${timeAgo(h.time)}</div>
+          </div>
+          <div class="feed-amount ${amountClass}">${sign}${formatMoney(h.amount)} ₽</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ===== ПОПОЛНЕНИЕ СВОЕЙ ЦЕЛИ =====
+  function openAddModal() { document.getElementById('addModal').classList.add('active'); }
+  function addFunds() {
+    const amount = parseFloat(document.getElementById('addAmount').value);
+    if (!amount || amount <= 0) { showToast('Введите сумму'); return; }
+    const g = goals.find(x => x.id === currentGoalId);
+    g.saved += amount;
+    g.history = g.history || [];
+    g.history.push({ type: 'add', amount, time: Date.now() });
+    saveGoals();
+    document.getElementById('addAmount').value = '';
+    closeModal('addModal');
+    openGoal(currentGoalId);
+    showToast('✅ Цель пополнена');
+  }
+
+  // ===== ШАРИНГ =====
+  function openShareModal() {
+    const url = window.location.origin + window.location.pathname + '?friend=' + profile.id + '&goal=' + currentGoalId + '&name=' + encodeURIComponent(profile.name);
+    document.getElementById('shareLink').value = url;
+    document.getElementById('shareModal').classList.add('active');
+  }
+  function copyShareLink() {
+    const input = document.getElementById('shareLink');
+    input.select();
+    document.execCommand('copy');
+    showToast('📋 Ссылка скопирована');
+  }
+
+  function openShareProfileModal() {
+    const url = window.location.origin + window.location.pathname + '?addFriend=' + profile.id + '&name=' + encodeURIComponent(profile.name);
+    document.getElementById('profileShareLink').value = url;
+    document.getElementById('shareProfileModal').classList.add('active');
+  }
+  function copyProfileShareLink() {
+    const input = document.getElementById('profileShareLink');
+    input.select();
+    document.execCommand('copy');
+    showToast('📋 Ссылка на профиль скопирована');
+  }
+  function copyProfileLink() {
+    const url = window.location.origin + window.location.pathname + '?addFriend=' + profile.id + '&name=' + encodeURIComponent(profile.name);
+    navigator.clipboard?.writeText(url);
+    showToast('📋 Ссылка скопирована');
+  }
+
+  // ===== ДРУЗЬЯ =====
+  function showFriends() {
+    switchTab('friends');
+  }
+
+  function confirmAddFriend() {
+    if (!pendingFriend) return;
+    friends.push({
+      id: pendingFriend.id,
+      name: pendingFriend.name,
+      addedAt: Date.now(),
+      goals: [
+        // Демо-цели для наглядности
+        {
+          id: Date.now() + 1,
+          name: 'Новый MacBook',
+          emoji: '💻',
+          amount: 150000,
+          currency: 'RUB',
+          saved: 45000,
+          history: [
+            { type: 'add', amount: 45000, time: Date.now() - 86400000 * 5 }
+          ]
+        },
+        {
+          id: Date.now() + 2,
+          name: 'Путешествие в Японию',
+          emoji: '🗾',
+          amount: 3000,
+          currency: 'USD',
+          saved: 80000,
+          history: [
+            { type: 'add', amount: 80000, time: Date.now() - 86400000 * 10 }
+          ]
+        }
+      ]
+    });
+    saveFriends();
+    pendingFriend = null;
+    closeModal('addFriendModal');
+    history.replaceState(null, '', window.location.pathname);
+    showToast('🎉 Друг добавлен!');
+    switchTab('friends');
+  }
+
+  function showDemoFriend() {
+    pendingFriend = { id: 'demo_' + Date.now(), name: 'Алексей (демо)' };
+    confirmAddFriend();
+  }
+
+  function renderFriends() {
+    document.getElementById('friendGoalDetails').classList.add('hidden');
+    document.getElementById('friendProfile').classList.add('hidden');
+    
+    if (friends.length === 0) {
+      document.getElementById('friendsEmpty').classList.remove('hidden');
+      document.getElementById('friendsList').classList.add('hidden');
+    } else {
+      document.getElementById('friendsEmpty').classList.add('hidden');
+      document.getElementById('friendsList').classList.remove('hidden');
+      const container = document.getElementById('friendsContainer');
+      container.innerHTML = friends.map(f => {
+        const activeGoals = (f.goals || []).length;
+        return `
+          <div class="friend-card" onclick="openFriendProfile('${f.id}')">
+            <div class="avatar purple">${f.name[0].toUpperCase()}</div>
+            <div class="friend-info">
+              <div class="friend-name">${escapeHtml(f.name)}</div>
+              <div class="friend-goals">${activeGoals} ${pluralize(activeGoals, 'цель', 'цели', 'целей')}</div>
+            </div>
+            <div class="friend-arrow">→</div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  function openFriendProfile(friendId) {
+    currentFriendId = friendId;
+    const friend = friends.find(f => f.id === friendId);
+    if (!friend) return;
+
+    document.getElementById('friendsEmpty').classList.add('hidden');
+    document.getElementById('friendsList').classList.add('hidden');
+    document.getElementById('friendGoalDetails').classList.add('hidden');
+    document.getElementById('friendProfile').classList.remove('hidden');
+
+    document.getElementById('fpAvatar').textContent = friend.name[0].toUpperCase();
+    document.getElementById('fpName').textContent = friend.name;
+    const totalGoals = (friend.goals || []).length;
+    document.getElementById('fpStats').textContent = `${totalGoals} ${pluralize(totalGoals, 'цель', 'цели', 'целей')}`;
+
+    const container = document.getElementById('fpGoalsContainer');
+    if (!friend.goals || friend.goals.length === 0) {
+      container.innerHTML = '<div class="card empty-state"><p style="color: var(--text-muted);">У друга пока нет целей</p></div>';
+      return;
+    }
+    container.innerHTML = friend.goals.map(g => {
+      const targetRub = g.amount * RATES[g.currency];
+      const percent = Math.min(100, (g.saved / targetRub) * 100);
+      return `
+        <div class="card goal-card" onclick="openFriendGoal('${friendId}', ${g.id})">
+          <div class="goal-header">
+            <div class="goal-title">${g.emoji} ${escapeHtml(g.name)}</div>
+            <div class="goal-amount">${formatMoney(g.amount)} ${CUR_SYM[g.currency]}</div>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill purple" style="width: ${percent}%"></div>
+          </div>
+          <div class="progress-info">
+            <span class="progress-percent" style="color: var(--purple);">${percent.toFixed(1)}%</span>
+            <span>${formatMoney(g.saved)} ₽</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function showFriendProfile() {
+    if (currentFriendId) openFriendProfile(currentFriendId);
+  }
+
+  function openFriendGoal(friendId, goalId) {
+    currentFriendId = friendId;
+    currentFriendGoalId = goalId;
+    const friend = friends.find(f => f.id === friendId);
+    const goal = friend?.goals?.find(g => g.id === goalId);
+    if (!friend || !goal) return;
+
+    document.getElementById('friendsEmpty').classList.add('hidden');
+    document.getElementById('friendsList').classList.add('hidden');
+    document.getElementById('friendProfile').classList.add('hidden');
+    document.getElementById('friendGoalDetails').classList.remove('hidden');
+
+    document.getElementById('fDetailEmoji').textContent = goal.emoji;
+    document.getElementById('fDetailName').textContent = goal.name;
+    document.getElementById('fFriendName').textContent = friend.name;
+
+    const targetRub = goal.amount * RATES[goal.currency];
+    const percent = Math.min(100, (goal.saved / targetRub) * 100);
+    const remaining = Math.max(0, targetRub - goal.saved);
+
+    document.getElementById('fDetailSaved').textContent = formatMoney(goal.saved) + ' ₽';
+    document.getElementById('fDetailTarget').textContent =
+      `из ${formatMoney(targetRub)} ₽ (${formatMoney(goal.amount)} ${CUR_SYM[goal.currency]})`;
+    document.getElementById('fDetailProgress').style.width = percent + '%';
+    document.getElementById('fDetailPercent').textContent = percent.toFixed(1) + '%';
+    document.getElementById('fDetailRemaining').textContent = 'Осталось: ' + formatMoney(remaining) + ' ₽';
+
+    renderFeed(goal, 'fFeedContainer');
+  }
+
+  // ===== ПОМОЩЬ ДРУГУ =====
+  function openHelpModal() {
+    if (goals.length === 0) {
+      showToast('Сначала создайте свою цель');
+      return;
+    }
+    selectedSourceGoalId = null;
+    const container = document.getElementById('sourceGoalsList');
+    container.innerHTML = goals.map(g => `
+      <div class="source-goal" onclick="selectSourceGoal(${g.id}, this)" data-id="${g.id}">
+        <div class="source-goal-header">
+          <div class="source-goal-name">${g.emoji} ${escapeHtml(g.name)}</div>
+          <div class="source-goal-balance">${formatMoney(g.saved)} ₽</div>
+        </div>
+      </div>
+    `).join('');
+    document.getElementById('helpAmount').value = '';
+    document.getElementById('helpModal').classList.add('active');
+  }
+
+  function selectSourceGoal(id, el) {
+    selectedSourceGoalId = id;
+    document.querySelectorAll('.source-goal').forEach(e => e.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  function confirmHelp() {
+    if (!selectedSourceGoalId) { showToast('Выберите свою цель'); return; }
+    const amount = parseFloat(document.getElementById('helpAmount').value);
+    if (!amount || amount <= 0) { showToast('Введите сумму'); return; }
+    
+    const myGoal = goals.find(g => g.id === selectedSourceGoalId);
+    if (amount > myGoal.saved) {
+      showToast('Недостаточно средств на этой цели');
+      return;
+    }
+
+    const friend = friends.find(f => f.id === currentFriendId);
+    const friendGoal = friend.goals.find(g => g.id === currentFriendGoalId);
+
+    // Списываем с моей цели
+    myGoal.saved -= amount;
+    myGoal.history = myGoal.history || [];
+    myGoal.history.push({
+      type: 'help_out',
+      amount,
+      time: Date.now(),
+      toName: friend.name
+    });
+
+    // Добавляем другу
+    friendGoal.saved += amount;
+    friendGoal.history = friendGoal.history || [];
+    friendGoal.history.push({
+      type: 'help_in',
+      amount,
+      time: Date.now(),
+      fromName: profile.name
+    });
+
+    saveGoals();
+    saveFriends();
+
+    closeModal('helpModal');
+    showToast(`💜 Вы помогли ${friend.name} на ${formatMoney(amount)} ₽`);
+    openFriendGoal(currentFriendId, currentFriendGoalId);
+  }
+
+  // ===== МОДАЛКИ =====
+  function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+  // ===== УТИЛИТЫ =====
+  function formatMoney(n) { return Math.round(n).toLocaleString('ru-RU'); }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function timeAgo(ts) {
+    const diff = Date.now() - ts;
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'только что';
+    if (mins < 60) return mins + ' мин назад';
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return hours + ' ч назад';
+    const days = Math.floor(hours / 24);
+    if (days < 7) return days + ' дн назад';
+    return new Date(ts).toLocaleDateString('ru-RU');
+  }
+  function pluralize(n, one, two, five) {
+    n = Math.abs(n) % 100;
+    const n1 = n % 10;
+    if (n > 10 && n < 20) return five;
+    if (n1 > 1 && n1 < 5) return two;
+    if (n1 === 1) return one;
+    return five;
+  }
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // Запуск
+  init();
+</script>
+</body>
+</html>
